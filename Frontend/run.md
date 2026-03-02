@@ -1,46 +1,33 @@
-# Running the Frontend
+# How to Start the Application
 
-This project is built with **React**, **TypeScript**, and **Vite**.
+Follow these simple steps to get the visualizer up and running on your computer.
 
-## Prerequisites
+### 1. Initial Setup
+First, make sure you have the necessary "engine" installed to run the code.
+- Download and install the **LTS version** from [nodejs.org](https://nodejs.org/).
+- Just follow the default installation prompts.
 
-Ensure you have [Node.js](https://nodejs.org/) installed (version 18 or higher is recommended).
+### 2. Open the Project Folder
+- Go to the folder where this project is saved (`Frontend`).
+- In the address bar at the top of your folder window, type `cmd` and press **Enter**. This will open a black command window exactly where you need it.
 
-## Getting Started
+### 3. Prepare the Application
+In that black window, type the following and press **Enter**:
+```bash
+npm install
+```
+*Wait a moment while it gathers the necessary files. You only need to do this step once.*
 
-1.  **Install Dependencies**:
-    Open your terminal in the `Frontend` directory and run:
-    ```bash
-    npm install
-    ```
+### 4. Launch the App
+Now, type this and press **Enter**:
+```bash
+npm run dev
+```
+You will see a message that says something like `Local: http://localhost:5173`.
 
-2.  **Start the Development Server**:
-    Run the following command to start the app locally:
-    ```bash
-    npm run dev
-    ```
+### 5. View it in your Browser
+- Leave the black window open (minimizing it is fine).
+- Open your web browser (Chrome, Edge, etc.).
+- Type `http://localhost:5173` into the address bar and press **Enter**.
 
-3.  **Access the Application**:
-    Once the server is running, open your browser and navigate to:
-    `http://localhost:5173`
-
-## Other Commands
-
-*   **Build for Production**:
-    ```bash
-    npm run build
-    ```
-*   **Preview Production Build**:
-    ```bash
-    npm run preview
-    ```
-*   **Lint the Code**:
-    ```bash
-    npm run lint
-    ```
-
-## Project Stack
-- **Framework**: React 19
-- **Build Tool**: Vite 7
-- **3D Engine**: Three.js (@react-three/fiber)
-- **Styling**: Vanilla CSS + Framer Motion for animations
+The application is now ready to use!
