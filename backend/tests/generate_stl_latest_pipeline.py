@@ -1,8 +1,10 @@
 """Generate STL using latest pseudo-wireframe + largest-face-first face detection."""
 
-from collections import defaultdict
+import sys
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from collections import defaultdict
 from reconstruction.pseudo_wireframe_paper import build_pseudo_wireframe_paper
 from algorithms.face_detection import (
     find_all_faces_by_planes,

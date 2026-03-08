@@ -171,9 +171,9 @@ def _build_theta(lambda_rows: Sequence[LambdaRow], front_edges, top_edges, side_
 
     A 3D edge (i, j) is accepted only if:
     - Every view where the two vertices project to distinct 2D vertices supports that edge.
-    - At least two views provide distinct-vertex evidence.
+    - At least ONE view provides distinct-vertex evidence with an edge.
 
-    This prevents weak single-view edge hallucinations.
+    Relaxed from requiring 2 views to allow edges visible in any single projection.
     """
     ef = {_edge_key(u, v) for u, v in front_edges}
     et = {_edge_key(u, v) for u, v in top_edges}
@@ -184,24 +184,32 @@ def _build_theta(lambda_rows: Sequence[LambdaRow], front_edges, top_edges, side_
         _, _, _, f1, t1, s1 = lambda_rows[i]
         _, _, _, f2, t2, s2 = lambda_rows[j]
 
-        constraints = 0
+        supported_views = 0
+        reject = False
 
+        # Check front view
         if f1 != f2:
-            constraints += 1
-            if not _supports_projected_edge(ef, int(f1), int(f2)):
-                continue
+            if _supports_projected_edge(ef, int(f1), int(f2)):
+                supported_views += 1
+            else:
+                reject = True
 
-        if t1 != t2:
-            constraints += 1
-            if not _supports_projected_edge(et, int(t1), int(t2)):
-                continue
+        # Check top view
+        if not reject and t1 != t2:
+            if _supports_projected_edge(et, int(t1), int(t2)):
+                supported_views += 1
+            else:
+                reject = True
 
-        if s1 != s2:
-            constraints += 1
-            if not _supports_projected_edge(es, int(s1), int(s2)):
-                continue
+        # Check side view
+        if not reject and s1 != s2:
+            if _supports_projected_edge(es, int(s1), int(s2)):
+                supported_views += 1
+            else:
+                reject = True
 
-        if constraints >= 2:
+        # Accept if at least one view supports the edge and no view rejects it
+        if not reject and supported_views >= 1:
             theta.append((i, j))
 
     return theta

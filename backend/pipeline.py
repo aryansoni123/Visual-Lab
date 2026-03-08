@@ -12,8 +12,8 @@ import sys
 import numpy as np
 from reconstruction.image_processing import process_three_views
 from reconstruction.pseudo_wireframe_paper import build_pseudo_wireframe_paper
+from algorithms.face_detection_minimal_artifacts import find_all_faces_minimal_artifacts
 from algorithms.face_detection import (
-    find_all_faces_by_planes,
     triangulate_polygon,
     ensure_outward_normals,
     export_stl,
@@ -153,11 +153,11 @@ def reconstruct_from_images(front_image, top_image, side_image, output_stl=None)
     print(f"✓ Theta (3D edges): {len(Theta)}")
     
     # ========== STAGE 3: FACE DETECTION ==========
-    print("\nStage 3: Face Detection (Largest-Face-First)")
+    print("\nStage 3: Face Detection (Minimal Artifacts)")
     print("-" * 70)
     
     try:
-        faces = find_all_faces_by_planes(Lambda, Theta)
+        faces = find_all_faces_minimal_artifacts(Lambda, Theta)
     except Exception as e:
         return {
             'Lambda': Lambda,
