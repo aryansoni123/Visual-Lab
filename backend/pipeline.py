@@ -10,9 +10,9 @@ Orchestrates:
 
 import sys
 import numpy as np
-from image_processing import process_three_views
-from pseudo_wireframe import build_pseudo_wireframe
-from face_detection import find_all_faces_by_planes, triangulate_polygon, export_stl
+from reconstruction.image_processing import process_three_views
+from reconstruction.pseudo_wireframe import build_pseudo_wireframe
+from algorithms.face_detection import find_all_faces_by_planes, triangulate_polygon, export_stl
 
 TOL = 1e-6
 
