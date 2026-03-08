@@ -1,18 +1,23 @@
 """
-End-to-End Pipeline: Image → 3D Pseudo-Wireframe → Faces → STL
+End-to-End Pipeline: Image → 3D Pseudo-Wireframe → Faces → STL.
 
 Orchestrates:
 1. Image processing (image_processing.py)
-2. Pseudo-wireframe reconstruction (pseudo_wireframe.py)
-3. Face detection (face_detection.py)
+2. Pseudo-wireframe reconstruction (pseudo_wireframe_paper.py)
+3. Face detection (face_detection.py largest-face-first)
 4. STL export
 """
 
 import sys
 import numpy as np
 from reconstruction.image_processing import process_three_views
-from reconstruction.pseudo_wireframe import build_pseudo_wireframe
-from algorithms.face_detection import find_all_faces_by_planes, triangulate_polygon, export_stl
+from reconstruction.pseudo_wireframe_paper import build_pseudo_wireframe_paper
+from algorithms.face_detection import (
+    find_all_faces_by_planes,
+    triangulate_polygon,
+    ensure_outward_normals,
+    export_stl,
+)
 
 TOL = 1e-6
 
@@ -106,7 +111,7 @@ def reconstruct_from_images(front_image, top_image, side_image, output_stl=None)
     print(f"  Visible: {sum(side_visibility)}, Hidden: {len(side_visibility) - sum(side_visibility)}")
     
     # ========== STAGE 2: PSEUDO-WIREFRAME RECONSTRUCTION ==========
-    print("\nStage 2: Pseudo-Wireframe Reconstruction (Furferi Algorithm)")
+    print("\nStage 2: Pseudo-Wireframe Reconstruction (Paper-Strict)")
     print("-" * 70)
     
     try:
@@ -127,11 +132,12 @@ def reconstruct_from_images(front_image, top_image, side_image, output_stl=None)
             'visibility': side_visibility
         }
         
-        # Call pseudo-wireframe builder
-        Lambda, Theta = build_pseudo_wireframe(
+        # Call strict pseudo-wireframe builder
+        Lambda, Theta, _ = build_pseudo_wireframe_paper(
             front_proj['vertices'], front_proj['edges'],
             top_proj['vertices'], top_proj['edges'],
-            side_proj['vertices'], side_proj['edges']
+            side_proj['vertices'], side_proj['edges'],
+            split_intersections=True,
         )
         
     except Exception as e:
@@ -147,7 +153,7 @@ def reconstruct_from_images(front_image, top_image, side_image, output_stl=None)
     print(f"✓ Theta (3D edges): {len(Theta)}")
     
     # ========== STAGE 3: FACE DETECTION ==========
-    print("\nStage 3: Face Detection (Plane Clustering)")
+    print("\nStage 3: Face Detection (Largest-Face-First)")
     print("-" * 70)
     
     try:
@@ -173,6 +179,7 @@ def reconstruct_from_images(front_image, top_image, side_image, output_stl=None)
         triangles = []
         for face in faces:
             triangles.extend(triangulate_polygon(face, Lambda))
+        triangles = ensure_outward_normals(triangles, Lambda)
         
         num_v = len(Lambda)
         num_e = len(Theta)
