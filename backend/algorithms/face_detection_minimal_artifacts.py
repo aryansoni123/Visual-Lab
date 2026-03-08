@@ -112,24 +112,50 @@ def polygon_area_3d(cycle, Lambda):
     return float(area)
 
 
+def count_connected_components(Theta, num_v):
+    """Count connected components of the edge graph."""
+    adj = defaultdict(set)
+    for u, v in Theta:
+        adj[u].add(v)
+        adj[v].add(u)
+
+    visited = set()
+    components = 0
+    for start in range(num_v):
+        if start not in visited:
+            components += 1
+            stack = [start]
+            while stack:
+                node = stack.pop()
+                if node in visited:
+                    continue
+                visited.add(node)
+                stack.extend(adj[node] - visited)
+    return components
+
+
 def find_all_faces_minimal_artifacts(Lambda, Theta, max_iterations=1000000):
     """
     Find faces that minimize triangulation artifacts.
-    
+
     Strategy: Prefer smaller faces (quads over larger polygons) to reduce
     the number of diagonal edges needed for triangulation.
-    
+    Uses the generalised Euler formula F = E - V + 2*c where c is the
+    number of connected components, so disconnected sub-solids are handled
+    correctly.
+
     Args:
         Lambda: List of 3D vertices
         Theta: List of 3D edges
         max_iterations: Maximum search nodes to explore
-    
+
     Returns:
         List of faces (each face is a list of vertex indices)
     """
     num_v = len(Lambda)
     num_e = len(Theta)
-    F_required = num_e - num_v + 2  # Euler formula
+    num_components = count_connected_components(Theta, num_v)
+    F_required = num_e - num_v + 2 * num_components  # Generalised Euler formula
     
     print(f"\n{'=' * 70}")
     print(f"FACE DETECTION: MINIMAL ARTIFACTS STRATEGY")
@@ -137,7 +163,8 @@ def find_all_faces_minimal_artifacts(Lambda, Theta, max_iterations=1000000):
     print(f"\nStep 1: Calculate required face count")
     print(f"  V (vertices) = {num_v}")
     print(f"  E (edges) = {num_e}")
-    print(f"  F_required = E - V + 2 = {num_e} - {num_v} + 2 = {F_required}")
+    print(f"  Connected components (c) = {num_components}")
+    print(f"  F_required = E - V + 2*c = {num_e} - {num_v} + {2*num_components} = {F_required}")
     
     # Step 2: Enumerate all simple cycles
     print(f"\nStep 2: Enumerate all simple cycles in edge graph...")
@@ -174,8 +201,14 @@ def find_all_faces_minimal_artifacts(Lambda, Theta, max_iterations=1000000):
         print(f"  ⚠ Not enough candidates for F_required={F_required}")
         return None
     
-    # Step 4: Sort by smallest face first (minimize triangulation)
-    ordered = sorted(candidates, key=lambda c: (len(c["cycle"]), -c["area"]))
+    # Helper: Check if face is horizontal (all vertices at same Z-level)
+    def is_horizontal(cycle):
+        z_vals = [Lambda[v][2] for v in cycle]
+        return len(set(z_vals)) == 1
+    
+    # Step 4: Sort by: size (smallest first), horizontal before vertical, then area
+    # This prioritizes top/bottom faces of boxes over side faces
+    ordered = sorted(candidates, key=lambda c: (len(c["cycle"]), not is_horizontal(c["cycle"]), -c["area"]))
     
     node_counter = {"count": 0}
     
@@ -242,8 +275,8 @@ def find_all_faces_minimal_artifacts(Lambda, Theta, max_iterations=1000000):
     print(f"\nStep 5: Verify Euler formula with found faces...")
     F_found = len(selected)
     euler = num_v - num_e + F_found
-    euler_valid = (euler == 2)
-    print(f"  V={num_v}, E={num_e}, F={F_found}")
-    print(f"  V - E + F = {euler} (valid: {euler_valid})")
+    euler_valid = (euler == 2 * num_components)
+    print(f"  V={num_v}, E={num_e}, F={F_found}, c={num_components}")
+    print(f"  V - E + F = {euler} (valid: {euler_valid}, expected {2 * num_components})")
     
     return selected
